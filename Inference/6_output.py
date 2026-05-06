@@ -52,10 +52,10 @@ def main():
 
     protpardelle_results = loc / "protpardelle" / "results"
 
-    if protpardelle_results.exists():
-        for item in protpardelle_results.iterdir():
-            if item.is_dir():
-                safe_move(item, result_dir)
+    if nmhc_dir.exists():
+        for d in nmhc_dir.iterdir():
+            if d.is_dir() and d.name != "incomplete":
+        	safe_move(d, result_dir)
     else:
         print("WARNING: protpardelle/results not found")
         
