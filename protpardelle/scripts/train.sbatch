@@ -1,0 +1,36 @@
+#!/bin/bash
+#SBATCH --output=train-%x.%j.out
+#SBATCH --error=train-%x.%j.err
+#SBATCH --partition=your-partition-name
+#SBATCH --gpus-per-node=1
+#SBATCH --gpu_cmode=shared
+#SBATCH --cpus-per-task=8
+#SBATCH --time=3-00:00:00
+
+if command -v module >/dev/null 2>&1; then
+    module load gcc/12.4.0
+fi
+
+if [ -z "$ENV_DIR" ]; then
+    conda activate protpardelle
+else
+    source "$ENV_DIR"/protpardelle/bin/activate
+fi
+
+PROJECT_ROOT_DIR=$(python -c "from protpardelle.env import PROJECT_ROOT_DIR; print(PROJECT_ROOT_DIR)")
+
+model_name=$1
+output_dir=$2
+debug=$3
+config_path="${PROJECT_ROOT_DIR}/examples/training/${model_name}.yaml"
+project_name="protpardelle-1c"
+wandb_id="your-wandb-id"
+
+WANDB__SERVICE_WAIT=300 python -m protpardelle.train \
+    --config "${config_path}" \
+    --out-dir "${output_dir}" \
+    --project "${project_name}" \
+    --wandb-id "${wandb_id}" \
+    --exp-name "${model_name}" \
+    --num-workers 8 \
+    ${debug:+$debug}
