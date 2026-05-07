@@ -116,26 +116,21 @@ def draw_clustered_heatmap(matrix_df, linkage_Z, outpath, title):
     cmap = make_blue_cmap()
 
     n = len(matrix_df)
-    fig_w = max(7.0, 0.22 * n + 2.0)
-    fig_h = max(6.5, 0.22 * n + 1.5)
+    fig_w = max(8.5, 0.26 * n + 3.5)
+    fig_h = max(7.5, 0.26 * n + 2.5)
 
     fig = plt.figure(figsize=(fig_w, fig_h))
 
     grid = fig.add_gridspec(
-        nrows=2,
+        nrows=1,
         ncols=3,
-        width_ratios=[0.9, 6.0, 0.25],
-        height_ratios=[0.05, 6.0],
-        wspace=0.02,
-        hspace=0.02,
+        width_ratios=[0.75, 6.0, 0.18],
+        wspace=0.18,
     )
 
-    ax_blank = fig.add_subplot(grid[0, 0])
-    ax_blank.axis("off")
-
-    ax_heat = fig.add_subplot(grid[1, 1])
-    ax_tree = fig.add_subplot(grid[1, 0])
-    ax_cbar = fig.add_subplot(grid[1, 2])
+    ax_tree = fig.add_subplot(grid[0, 0])
+    ax_heat = fig.add_subplot(grid[0, 1])
+    ax_cbar = fig.add_subplot(grid[0, 2])
 
     dendrogram(
         linkage_Z,
@@ -162,18 +157,44 @@ def draw_clustered_heatmap(matrix_df, linkage_Z, outpath, title):
         cbar_ax=ax_cbar,
     )
 
-    ax_heat.set_title(title, fontsize=12, pad=10)
+    ax_heat.set_title(title, fontsize=12, pad=14)
     ax_heat.set_xlabel("")
     ax_heat.set_ylabel("")
-    ax_heat.tick_params(axis="x", labelrotation=90, labelsize=5, length=0, pad=1)
-    ax_heat.tick_params(axis="y", labelrotation=0, labelsize=5, length=0, pad=1)
+
+    ax_heat.tick_params(
+        axis="x",
+        labelrotation=90,
+        labelsize=5,
+        length=0,
+        pad=3,
+    )
+
+    ax_heat.tick_params(
+        axis="y",
+        labelrotation=0,
+        labelsize=5,
+        length=0,
+        pad=3,
+    )
 
     for spine in ax_heat.spines.values():
         spine.set_visible(False)
 
-    ax_cbar.set_ylabel("similarity confidence", rotation=90, labelpad=8, fontsize=8)
-    ax_cbar.tick_params(labelsize=7, length=2)
-    ax_cbar.set_yticks([THR_DISSIMILAR, THR_BALANCED, THR_SIMILAR])
+    ax_cbar.set_ylabel(
+        "Predicted similarity",
+        rotation=90,
+        labelpad=10,
+        fontsize=7,
+    )
+
+    ax_cbar.tick_params(labelsize=6, length=2, pad=2)
+
+    ax_cbar.set_yticks([
+        THR_DISSIMILAR,
+        THR_BALANCED,
+        THR_SIMILAR,
+    ])
+
     ax_cbar.set_yticklabels([
         f"{THR_DISSIMILAR:.2f}",
         f"{THR_BALANCED:.2f}",
@@ -181,7 +202,14 @@ def draw_clustered_heatmap(matrix_df, linkage_Z, outpath, title):
     ])
 
     fig.patch.set_facecolor("white")
-    fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
+    fig.subplots_adjust(
+        left=0.06,
+        right=0.92,
+        top=0.92,
+        bottom=0.16,
+    )
+
+    fig.savefig(outpath, dpi=300, facecolor="white")
     plt.close(fig)
 
 

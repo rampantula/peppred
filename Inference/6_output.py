@@ -1,12 +1,11 @@
 from pathlib import Path
 from datetime import datetime
 import shutil
-
 from constants import mainpath
 
 #script that organizes outputs
 
-def safe_move(src: Path, dst: Path):
+def moveit(src: Path, dst: Path):
     if src.exists():
         target = dst / src.name
         if target.exists():
@@ -15,6 +14,16 @@ def safe_move(src: Path, dst: Path):
     else:
         print(f"WARNING: {src} not found")
 
+def renameit(src: Path, new_name: str):
+    if src.exists():
+        target = src.parent / new_name
+
+        if target.exists():
+            target = src.parent / f"{new_name}_renamed"
+
+        src.rename(target)
+    else:
+        print(f"WARNING: {src} not found")
 
 def main():
     loc = Path(mainpath)
@@ -35,19 +44,18 @@ def main():
 
     if nmhc_dir.exists():
         for d in nmhc_dir.iterdir():
-        	safe_move(d, result_dir)
+        	moveit(d, result_dir)
         
     print(f"Result directory:\n{result_dir}")
 
-    safe_move(loc / "Inference" / "out", result_dir)
-    safe_move(loc / "Inference" / "scorings", result_dir)
+    moveit(loc / "Inference" / "out", result_dir)
+    #moveit(loc / "Inference" / "scorings", result_dir) --> redundant scorings directory (can be optionally turned on)
 
     afft_dir = loc / "AFFT-HLA3DB"
 
-    safe_move(afft_dir / "outfiles", result_dir)
-    safe_move(afft_dir / "input_seq", result_dir)
+    moveit(afft_dir / "outfiles", result_dir)
+    moveit(afft_dir / "input_seq", result_dir)
 
-    # recreate input_seq
     (afft_dir / "input_seq").mkdir(parents=True, exist_ok=True)
 
     protpardelle_results = loc / "protpardelle" / "results"
@@ -55,19 +63,23 @@ def main():
     if nmhc_dir.exists():
         for d in nmhc_dir.iterdir():
             if d.is_dir() and d.name != "incomplete":
-        	safe_move(d, result_dir)
+        	moveit(d, result_dir)
     else:
-        print("WARNING: protpardelle/results not found")
+        print("WARNING: protpardelle/results doesn't exist, we could not moveit moveit")
         
-        
-   # move all .txt and .csv from loc/results
     results_dir = loc / "results"
 
     for f in results_dir.glob("*.csv"):
-        safe_move(f, result_dir)
+        moveit(f, result_dir)
 
     for f in results_dir.glob("*.txt"):
-        safe_move(f, result_dir)
+        moveit(f, result_dir)
+    
+    renameit(result_dir / "out", "Inference_Results")
+    renameit(result_dir / "outfiles", "AFF2_structures")
+    renameit(result_dir / "peppred", "Protpardelle_out")
+    renameit(result_dir / "input_seq", "AFF2_inputs")
+
 
         print("\nDone.")
 
