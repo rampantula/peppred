@@ -78,6 +78,7 @@ python 5_visualize.py
 python 6_output.py
 
 rm -rf ${LOC}/Inference/structures
+rm -rf ${LOC}/Inference/scorings
 
 EOF
 )
