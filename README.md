@@ -18,7 +18,7 @@ Additionaly, this program utilizes SLURM job scheduling to parallelize predictio
 
 2. Set up Protpardelle using README.md inside Protpardelle subfolder. You will need to create the Protpardelle conda environment and download the protpardelle specific model parameters using the instructions within the README.md inside this subfolder.
 
-2. Download custom parameters from: and utilize README.md inside parameters director to install each file in its given location
+2. Download custom parameters from: 10.5281/zenodo.20076767 and utilize README.md inside parameters director to install each file in its given location
 
 3. Return to the peppred/ directory and create the custom conda environments using the commands below:
 	conda env create -f alphafold.yml
