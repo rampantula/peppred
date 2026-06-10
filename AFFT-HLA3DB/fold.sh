@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=gen_inputs
 #SBATCH --time=00:20:00
-#SBATCH -p shortq
+#SBATCH -p {{PARTITION_SHORT}}
 #SBATCH --mem=8G
 #SBATCH -o inputgen.out
 #SBATCH --error=inputgen.err
@@ -30,7 +30,7 @@ for inputfile in ./input_seq/*.txt; do
     elog="runlogs/${targname}.err"
 
     jid=$(sbatch --parsable \
-        --partition=gpuq \
+        --partition={{PARTITION_GPU}} \
         --gres=gpu:1 \
         --mem=64G \
         --output="$olog" \

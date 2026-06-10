@@ -9,7 +9,11 @@ ROOT = "enter path ../peppred"
 ROSETTA = "enter path to ../.../main"
 CONDA = "enter path to ../bin/activate"
 TENSOR = "example: ../anaconda3/envs/../lib:/../../lib/python3.9/site-packages/tensorrt"
-NMHC = "example../netMHCpan-4.1/netMHCpan"
+NMHC = "enter path to netMHCpan-4.1/netMHCpan"
+# Partition names (change for your HPC cluster)
+# Sherlock: gpu / normal | Original lab: gpuq / shortq
+PARTITION_GPU = "gpu"
+PARTITION_SHORT = "normal"
 
 ### DO NOT EDIT ###
 
@@ -20,7 +24,10 @@ TARGET_FILES = [
     f"{ROOT}/AFFT-HLA3DB/predict_structure.sh",
     f"{ROOT}/AFFT-HLA3DB/misc/constants.py",
     f"{ROOT}/protpardelle/misc/constants.py",
-    f"{ROOT}/Inference/constants.py"
+    f"{ROOT}/Inference/constants.py",
+    f"{ROOT}/start.py",
+    f"{ROOT}/Inference/list.sh",
+    f"{ROOT}/protpardelle/run.sh",
 ]
 
 config_vars = {k: str(v) for k, v in globals().items() if k.isupper() and k not in ["TARGET_FILES"]}

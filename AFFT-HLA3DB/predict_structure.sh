@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=afft_hla3db
 #SBATCH --time=0:30:00
-#SBATCH -p gpuq
+#SBATCH -p {{PARTITION_GPU}}
 #SBATCH --gres=gpu:1
 #SBATCH -o inputgen.out
 #SBATCH --error=inputgen.err

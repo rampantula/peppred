@@ -168,6 +168,10 @@ def write_alleles_file(pepID, allele_list):
                 print(f"[Warning] Allele {allele} not found in any supertype.")
 
 def generate_netmhc_script(pepID, sequence):
+    # Read configured netMHCpan path from constants (populated by setup.py)
+    from protpardelle.misc import constants as prot_constants
+    netmhc_path = prot_constants.netloc
+
     nmhc_dir = os.path.join("NMHC", pepID)
     script_path = os.path.join(nmhc_dir, f"run_{pepID}.sh")
 
@@ -176,7 +180,7 @@ def generate_netmhc_script(pepID, sequence):
         f.write(f"touch NMHC/{pepID}/{sequence}.xls\n")
         f.write(
             f"cat NMHC/{pepID}/alleles.txt | while read line; do "
-            f"/mnt/isilon/sgourakis_lab_storage/main/netMHCpan-4.1/netMHCpan -a $line -p NMHC/{pepID}/{sequence}.pep -l 9 -BA "
+            f"{netmhc_path} -a $line -p NMHC/{pepID}/{sequence}.pep -l 9 -BA "
             f"-xlsfile NMHC/{pepID}/{sequence}.xls "
             f">> NMHC/{pepID}/{sequence}.xls; "
             f"done\n"
@@ -254,7 +258,7 @@ def main():
         "sbatch",
         f"--dependency=afterok:{cover_job}",
         "-p",
-        "gpuq",
+        "{{PARTITION_GPU}}",
         "--gres=gpu:1",
         "--output=slurm_logs/fold.out",
         "--error=slurm_logs/fold.err",

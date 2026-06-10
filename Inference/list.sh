@@ -30,7 +30,7 @@ ARRAY_JOB_ID=$(sbatch --parsable <<EOF
 #SBATCH --mem=${ARRAY_MEM}
 #SBATCH --array=0-4
 
-source /mnt/isilon/sgourakis_lab_storage/anaconda3/bin/activate
+source {{CONDA}}
 conda activate ${CONDA_ENV}
 
 python ${PYTHON_SCRIPT}
@@ -49,7 +49,7 @@ MERGE_JOB_ID=$(sbatch --parsable --dependency=afterok:${ARRAY_JOB_ID} <<EOF
 #SBATCH --cpus-per-task=${MERGE_CPUS}
 #SBATCH --mem=${MERGE_MEM}
 
-source /mnt/isilon/sgourakis_lab_storage/anaconda3/bin/activate 
+source {{CONDA}} 
 conda activate ${CONDA_ENV}
 
 export MERGE_PARTIALS=1

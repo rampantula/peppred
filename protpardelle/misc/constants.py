@@ -5,11 +5,11 @@
 #   Email: rpantula@sas.upenn.edu
 
 #USER VARIABLE **** IMPORTANT FOR USERS ****
-mainpath="/mnt/isilon/sgourakis_lab_storage/personal/test/peppred"
+mainpath="{{ROOT}}"
 dbpath=f"{mainpath}/Inference"
-ROSETTA_INSTALL_DIR = "/mnt/isilon/sgourakis_lab_storage/main/rosetta/rosetta_src_2021.16.61629_bundle/main"
-condapath = "/mnt/isilon/sgourakis_lab_storage/anaconda3/bin/activate"
-netloc ="/mnt/isilon/sgourakis_lab_storage/main/netMHCpan-4.1/netMHCpan"
+ROSETTA_INSTALL_DIR = "{{ROSETTA}}"
+condapath = "{{CONDA}}"
+netloc ="{{NMHC}}"
 
 
 
