@@ -98,4 +98,7 @@ dependencies:
       - tensorflow-cpu==2.11.1
       - tensorflow-estimator==2.11.0
       - toolz==1.0.0
-prefix: /home/pantular/miniconda3/envs/alphafold
+# Install with: conda env create -f alphafold.yml --prefix /your/path/alphafold
+# Note: Requires CUDA. If you have CUDA 11.7, clone from afft-hla3db instead.
+# See README for details.
+# prefix: /home/pantular/miniconda3/envs/alphafold

@@ -108,4 +108,5 @@ dependencies:
   - zstd=1.5.6=hc292b87_0
   - pip:
       - matplotlib==3.10.3
-prefix: /home/pantular/miniconda3/envs/neural
+# Install with: conda env create -f train.yml --prefix /your/path/train
+# prefix: /home/pantular/miniconda3/envs/neural
