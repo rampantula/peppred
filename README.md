@@ -54,8 +54,6 @@ conda env create -f compare.yml --prefix /your/path/compare
 conda env create -f train.yml --prefix /your/path/train
 ```
 
-> **Note:** The yml files have hardcoded `prefix:` lines pointing to the original developer's paths. The `--prefix` flag overrides these. Choose a location with sufficient storage (e.g., `$SCRATCH/peppred/envs/` on Sherlock).
-
 If you encounter Jax version issues with the alphafold environment, resolve with:
 
 ```bash
@@ -71,11 +69,12 @@ Open `setup.py` and fill in the configuration section at the top:
 ROOT = "/full/path/to/peppred"          # absolute path to this repo
 ROSETTA = "/full/path/to/rosetta/main"  # Rosetta main directory
 CONDA = "/full/path/to/anaconda3/bin/activate"
-TENSOR = "..."                          # tensorrt lib path (ask your cluster admin)
 NMHC = "/full/path/to/netMHCpan-4.1/netMHCpan"
 PARTITION_GPU = "gpu"                   # SLURM partition for GPU jobs
 PARTITION_SHORT = "normal"              # SLURM partition for short CPU jobs
 ```
+
+The alphafold environment's library path (TensorRT) is derived automatically from `CONDA` — no separate configuration needed.
 
 Then run:
 

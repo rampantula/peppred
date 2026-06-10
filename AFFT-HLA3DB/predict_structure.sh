@@ -9,7 +9,9 @@
 targname=$1
 params=$2
 module load cuda11.8/toolkit/11.8.0
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{{TENSOR}}
+# Derive alphafold env lib path from CONDA (no TENSOR config needed)
+ALPHAFOLD_ENV=$(dirname $(dirname {{CONDA}}))/envs/alphafold
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ALPHAFOLD_ENV/lib
 source {{CONDA}}
 
 conda activate alphafold

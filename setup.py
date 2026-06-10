@@ -8,10 +8,8 @@ import re
 ROOT = "enter path ../peppred"
 ROSETTA = "enter path to ../.../main"
 CONDA = "enter path to ../bin/activate"
-TENSOR = "example: ../anaconda3/envs/../lib:/../../lib/python3.9/site-packages/tensorrt"
 NMHC = "enter path to netMHCpan-4.1/netMHCpan"
 # Partition names (change for your HPC cluster)
-# Sherlock: gpu / normal | Original lab: gpuq / shortq
 PARTITION_GPU = "gpu"
 PARTITION_SHORT = "normal"
 
