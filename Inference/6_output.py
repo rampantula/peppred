@@ -1,7 +1,12 @@
 from pathlib import Path
 from datetime import datetime
 import shutil
+import os
 from constants import mainpath
+
+# Change note (2026-06-14, wyattb/codex):
+# Public-SIF release prep: package only current run directories and locate
+# Protpardelle outputs from env-configured paths to avoid stale-result leakage.
 
 #script that organizes outputs
 
@@ -25,26 +30,31 @@ def renameit(src: Path, new_name: str):
     else:
         print(f"WARNING: {src} not found")
 
+def current_run_dirs(src: Path, excluded=()):
+    excluded = set(excluded)
+    if not src.exists():
+        return []
+    return sorted(
+        d for d in src.iterdir()
+        if d.is_dir() and d.name not in excluded and not d.name.startswith(".")
+    )
+
 def main():
     loc = Path(mainpath)
     timestamp = datetime.now().strftime("%m%d%y%H%M%S")
 
     nmhc_dir = loc / "NMHC"
 
-    names = []
-    if nmhc_dir.exists():
-        for d in nmhc_dir.iterdir():
-            if d.is_dir() and d.name != "incomplete":
-                names.append(d.name)
+    nmhc_run_dirs = current_run_dirs(nmhc_dir, excluded={"incomplete", "__pycache__"})
+    names = [d.name for d in nmhc_run_dirs]
 
     joined_name = "_".join(names) if names else "NMHC_results"
 
     result_dir = loc / "results" / f"{joined_name}_{timestamp}"
     result_dir.mkdir(parents=True, exist_ok=True)
 
-    if nmhc_dir.exists():
-        for d in nmhc_dir.iterdir():
-        	moveit(d, result_dir)
+    for d in nmhc_run_dirs:
+        moveit(d, result_dir)
         
     print(f"Result directory:\n{result_dir}")
 
@@ -58,14 +68,18 @@ def main():
 
     (afft_dir / "input_seq").mkdir(parents=True, exist_ok=True)
 
-    protpardelle_results = loc / "protpardelle" / "results"
+    protpardelle_results = Path(os.environ.get("PROTPARDELLE_OUTPUT_DIR", loc / "protpardelle" / "results"))
+    protpardelle_project = (
+        os.environ.get("PROTPARDELLE_CONFIG_NAME")
+        or os.environ.get("PROTPARDELLE_PROJECT_NAME")
+        or "peppred"
+    )
+    protpardelle_project_dir = protpardelle_results / protpardelle_project
 
-    if nmhc_dir.exists():
-        for d in nmhc_dir.iterdir():
-            if d.is_dir() and d.name != "incomplete":
-        	moveit(d, result_dir)
+    if protpardelle_project_dir.exists():
+        moveit(protpardelle_project_dir, result_dir)
     else:
-        print("WARNING: protpardelle/results doesn't exist, we could not moveit moveit")
+        print(f"WARNING: Protpardelle project output not found: {protpardelle_project_dir}")
         
     results_dir = loc / "results"
 
@@ -77,11 +91,11 @@ def main():
     
     renameit(result_dir / "out", "Inference_Results")
     renameit(result_dir / "outfiles", "AFF2_structures")
-    renameit(result_dir / "peppred", "Protpardelle_out")
+    renameit(result_dir / protpardelle_project, "Protpardelle_out")
     renameit(result_dir / "input_seq", "AFF2_inputs")
 
 
-        print("\nDone.")
+    print("\nDone.")
 
 if __name__ == "__main__":
     main()

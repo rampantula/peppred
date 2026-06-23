@@ -2,15 +2,21 @@
 
 PepPred is a structural similarity prediction program that utilizes sequence information of 9mer peptide antigens and predicted binder HLA alleles to generate structural comparisons of the peptide backbone conformations between two alleles presenting a shared antigen.
 
-## Program Dependencies
+## Runtime Options
 
-This program requires the following pre-installed dependencies:
-- Anaconda: https://www.anaconda.com/download
-- Rosetta: https://docs.rosettacommons.org/demos/latest/tutorials/install_build/install_build
-- TensorFlow (Recommend using conda to create a Tensor-specific environment): https://www.tensorflow.org/install/pip
-- NetMHCpan 4.1: https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/
+The recommended public runtime is the PepPred Singularity/Apptainer image plus
+the companion model-asset archive. The pipeline still supports the original
+host conda setup when `PEPPRED_SIF` is unset.
 
-Additionally, this program utilizes SLURM job scheduling to parallelize prediction and inference jobs.
+SIF runs require:
+- Singularity or Apptainer
+- Slurm
+- the PepPred `.sif`
+- the extracted companion model/tool asset archive
+- a user-provided NetMHCpan install
+
+Host conda runs require the original conda environments and host NetMHCpan
+paths configured through `setup.py`.
 
 ## Environment Overview
 
@@ -23,7 +29,7 @@ This pipeline uses four conda environments:
 | `train` | Model inference and training | `Inference/1_extract.py` through `6_output.py` |
 | `protpardelle` | Structural sampling via Protpardelle-1c | `protpardelle/run.sh` |
 
-## SETUP
+## Setup
 
 ### 1. Clone the repository
 
@@ -32,67 +38,129 @@ git clone https://github.com/rampantula/peppred.git
 cd peppred
 ```
 
-### 2. Set up Protpardelle
+### 2. Download and extract SIF release files
 
-Protpardelle is included as a subdirectory. Follow the instructions in `protpardelle/README.md` to:
-- Create the `protpardelle` conda environment
-- Download model weights from Zenodo
-- Install Foldseek
+Download the public SIF release files from
+<https://zenodo.org/records/20076767>:
 
-### 3. Download custom parameters
-
-Download from: https://zenodo.org/records/20076767
-
-Follow the README inside the `parameters/` directory to install each file in its correct location.
-
-### 4. Create conda environments
-
-```bash
-# Install to a location you control (replace /your/path/ with an absolute path)
-conda env create -f alphafold.yml --prefix /your/path/alphafold
-conda env create -f compare.yml --prefix /your/path/compare
-conda env create -f train.yml --prefix /your/path/train
+```text
+peppred-v0.1.0.sif
+peppred-v0.1.0.sif.sha256
+peppred-model-assets-v0.1.0.tar.zst
+peppred-model-assets-v0.1.0.tar.zst.sha256
+peppred-model-assets-v0.1.0.MANIFEST.sha256
 ```
 
-If you encounter Jax version issues with the alphafold environment, resolve with:
+Verify the downloads if the checksum files are available, then extract the
+companion asset archive:
 
 ```bash
-conda activate alphafold
-pip install --upgrade "jax==0.4.1" "jaxlib==0.4.1+cuda11.cudnn86" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+sha256sum -c peppred-v0.1.0.sif.sha256
+sha256sum -c peppred-model-assets-v0.1.0.tar.zst.sha256
+tar -I zstd -xf peppred-model-assets-v0.1.0.tar.zst
 ```
 
-### 5. Configure paths and partitions
+This creates `peppred-model-assets-v0.1.0/`. Do not move individual model files
+out of that directory; the runtime paths below point into the extracted asset
+tree.
 
-Open `setup.py` and fill in the configuration section at the top:
+### 3. Configure SIF runtime paths
 
-```python
-ROOT = "/full/path/to/peppred"          # absolute path to this repo
-ROSETTA = "/full/path/to/rosetta/main"  # Rosetta main directory
-CONDA = "/full/path/to/anaconda3/bin/activate"
-NMHC = "/full/path/to/netMHCpan-4.1/netMHCpan"
-PARTITION_GPU = "gpu"                   # SLURM partition for GPU jobs
-PARTITION_SHORT = "normal"              # SLURM partition for short CPU jobs
-```
-
-The alphafold environment's library path (TensorRT) is derived automatically from `CONDA` — no separate configuration needed.
-
-Then run:
+For SIF runs, copy the env template and edit the copy:
 
 ```bash
+cp peppred-public.env.example peppred-public.env
+```
+
+Users normally set these values in `peppred-public.env`:
+
+```bash
+export PEPPRED_SIF=/path/to/peppred.sif
+export PEPPRED_NETMHCPAN_HOST_DIR=/path/to/netmhcpan
+export PEPPRED_ASSETS_HOST=/path/to/peppred-model-assets-v0.1.0
+export PEPPRED_CPU_PARTITION=normal
+export PEPPRED_GPU_PARTITION=gpu
+export PEPPRED_GPU_GRES=gpu:1
+export PEPPRED_GPU_CONSTRAINT=
+```
+
+The v0.1.0 SIF is validated on NVIDIA A100/compute capability 8.x. On Sherlock,
+set `PEPPRED_GPU_CONSTRAINT=GPU_CC:8.0`. H100/compute capability 9.x requires an
+updated image with compatible TensorFlow/JAX GPU builds.
+
+Set `PEPPRED_ASSETS_HOST` to the extracted `peppred-model-assets-v0.1.0`
+directory, not to the `.tar.zst` file.
+
+The derived asset paths, `NUM_SAMPLES=2`, and `NUM_MPNN_SEQS=0` defaults in
+`peppred-public.env.example` usually do not need to change. Keep
+`NUM_MPNN_SEQS=0` unless intentionally testing an unvalidated path.
+
+PyRosetta is attempted by default for dihedrals. If it is not installed in the
+active Python environment, set `PEPPRED_PYROSETTA_PATH` to a compatible
+PyRosetta package path. For SIF runs, also set `PEPPRED_PYROSETTA_HOST_PATH` and
+`PEPPRED_PYROSETTA_CONTAINER_PATH` if that package is outside an already-bound
+directory. Set `PEPPRED_ENABLE_PYROSETTA=0` to use the Biopython fallback.
+
+Use runner flags for run-specific values:
+
+```bash
+./run_peppred.sh --env peppred-public.env --input input.csv --run-id my_run
+```
+
+### 4. Set up host conda environments
+
+Use this path only when running without the SIF. Leave `PEPPRED_SIF` and `SIF`
+unset. The scripts activate environments by name, so create `alphafold`,
+`compare`, `train`, and `protpardelle` as named conda environments. If your HPC
+home directory has limited space, configure conda to place named environments in
+scratch before creating them.
+
+```bash
+conda env create -f alphafold.yml
+conda env create -f compare.yml
+conda env create -f train.yml
+
+cd protpardelle
+conda create -n protpardelle python=3.12 --yes
+conda activate protpardelle
+bash setup.sh
+bash download_model_params.sh
+cd ..
+```
+
+Host conda runs also require a host NetMHCpan install, Slurm, and the model/tool
+assets expected by the pipeline. Follow `protpardelle/README.md` for
+Protpardelle weights, Foldseek, and optional ProteinMPNN/ESMFold assets.
+
+Configure runtime paths through environment variables, then run `setup.py` to
+write the legacy placeholders:
+
+```bash
+unset PEPPRED_SIF SIF
+export PEPPRED_ROOT="$PWD"
+export PEPPRED_CONDA_ACTIVATE=/path/to/miniconda3/bin/activate
+export PEPPRED_NETMHCPAN_BIN=/path/to/netMHCpan
+export PEPPRED_GPU_PARTITION=gpu
+export PEPPRED_CPU_PARTITION=normal
+export PEPPRED_ROSETTA_DIR=/path/to/rosetta/main  # optional
+
+# PyRosetta is attempted by default. Use 0 if running the Biopython fallback.
+export PEPPRED_ENABLE_PYROSETTA=0
+
 python setup.py
 ```
 
-This replaces all `{{VARIABLE}}` placeholders in the configuration files. The script modifies files in place and creates `.bak` backups of the originals.
-
-> **Important:** If you change any path or partition values, re-run `python setup.py`.
-
-### 6. Verify the installation
+Verify the host environments before submitting a run:
 
 ```bash
-conda activate compare && python -c "import pymol"
+conda activate compare && python -c "import pymol; import Bio"
 conda activate train && python -c "import sklearn; import lightgbm"
 conda activate alphafold && python -c "import jax; import openmm"
 ```
+
+If using PyRosetta in host conda mode, install it into `compare` or set
+`PEPPRED_PYROSETTA_PATH` to a Python-compatible package path before running the
+pipeline.
 
 ## USAGE
 
@@ -101,17 +169,27 @@ conda activate alphafold && python -c "import jax; import openmm"
 Fill `input.csv` with the following format:
 
 ```
-Trial_Name, peptide sequence, Allele1, Allele 2, ...
+Trial_Name,Peptide,Allele1,Allele2,...
 ```
 
-- Allele format must match `A*02:01` (e.g., `A0201` is also accepted and auto-corrected)
+- Allele format must match `A*02:01`; `A02:01` is also accepted and normalized
 - Only 9mer peptides are supported
-- `Trial_Name` must not contain special characters (underscore `_` is allowed) or spaces
+- Avoid `Trial_Name` values beginning with `pep`; those are treated as headers
 - A test case is included in the repository
 
 ### Run the pipeline
 
+For SIF runs:
+
 ```bash
+./run_peppred.sh --env peppred-public.env --input <input.csv> --run-id my_run
+```
+
+For host conda runs:
+
+```bash
+unset PEPPRED_SIF SIF
+python setup.py
 conda activate compare
 python start.py <input.csv>
 ```

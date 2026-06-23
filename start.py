@@ -4,11 +4,54 @@ import sys
 import csv
 import subprocess
 from supertypes import supertypes
-from coverage import run_coverage_from_list 
 import re
 import os
 import shutil
 from datetime import datetime
+
+REPO_ROOT = os.getenv("PEPPRED_ROOT", os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_NETMHCPAN_CONTAINER_DIR = "/container/software/netmhcpan"
+DEFAULT_NETMHCPAN_VERSION_DIR = "netMHCpan-4.2-linux"
+
+def configured_sif():
+    return os.getenv("PEPPRED_SIF", os.getenv("SIF", "")).strip()
+
+def slurm_export_arg(values):
+    pairs = [f"{key}={value}" for key, value in values.items() if value is not None and value != ""]
+    if not pairs:
+        return "--export=ALL"
+    return "--export=ALL," + ",".join(pairs)
+
+def shell_quote(value):
+    return "'" + str(value).replace("'", "'\"'\"'") + "'"
+
+def singularity_exec_prefix(sif, repo_root, netmhc_host_dir, netmhc_container_dir, nv=False, include_assets=True):
+    scratch = os.getenv("SCRATCH", "/scratch")
+    parts = ["singularity", "exec", "--cleanenv", "--env", "PYTHONPATH="]
+    if nv:
+        parts.append("--nv")
+    parts.extend([
+        "--bind", f"{repo_root}:{repo_root}",
+        "--bind", f"{netmhc_host_dir}:{netmhc_container_dir}",
+        "--bind", f"{scratch}:/scratch",
+    ])
+    assets_host = os.getenv("PEPPRED_ASSETS_HOST", "")
+    assets_container = os.getenv("PEPPRED_ASSETS_CONTAINER", "")
+    if include_assets and assets_host and assets_container:
+        parts.extend(["--bind", f"{assets_host}:{assets_container}"])
+    pyrosetta_host = os.getenv("PEPPRED_PYROSETTA_HOST_PATH", "").strip()
+    pyrosetta_container = os.getenv("PEPPRED_PYROSETTA_CONTAINER_PATH", pyrosetta_host).strip()
+    if pyrosetta_host and pyrosetta_container:
+        parts.extend(["--bind", f"{pyrosetta_host}:{pyrosetta_container}"])
+    pyrosetta_path = os.getenv("PEPPRED_PYROSETTA_PATH", pyrosetta_container).strip()
+    for key, value in {
+        "PEPPRED_ENABLE_PYROSETTA": (os.getenv("PEPPRED_ENABLE_PYROSETTA") or "1").strip(),
+        "PEPPRED_PYROSETTA_PATH": pyrosetta_path,
+    }.items():
+        if value:
+            parts.extend(["--env", f"{key}={value}"])
+    parts.append(sif)
+    return " ".join(shell_quote(p) for p in parts)
 
 def moveAFFT():
     src = "AFFT-HLA3DB"
@@ -103,7 +146,11 @@ def process_csv(input_csv):
             if not row or all(not c.strip() for c in row):
                 print(f"[Warning] Skipping blank row {row_num}")
                 continue
-            if row[0].lower().startswith("pep"):
+            first_field = re.sub(r"[\s_-]+", "_", row[0].strip().lower())
+            second_field = re.sub(r"[\s_-]+", "_", row[1].strip().lower()) if len(row) > 1 else ""
+            if row[0].lower().startswith("pep") or (
+                first_field in {"trial_name", "trial"} and second_field == "peptide"
+            ):
                 print(f"[Info] Detected header row at {row_num}, skipping.")
                 continue
             if len(row) < 2:
@@ -171,35 +218,81 @@ def generate_netmhc_script(pepID, sequence):
     # Read configured netMHCpan path from constants (populated by setup.py)
     from protpardelle.misc import constants as prot_constants
     netmhc_path = prot_constants.netloc
+    cpu_partition = os.getenv("PEPPRED_CPU_PARTITION", "normal")
+    repo_root = os.getenv("PEPPRED_ROOT", REPO_ROOT)
+    sif = configured_sif()
+    netmhc_host_dir = os.getenv("PEPPRED_NETMHCPAN_HOST_DIR", "")
+    netmhc_container_dir = os.getenv("PEPPRED_NETMHCPAN_CONTAINER_DIR", DEFAULT_NETMHCPAN_CONTAINER_DIR)
+    netmhc_version_dir = os.getenv("PEPPRED_NETMHCPAN_VERSION_DIR", DEFAULT_NETMHCPAN_VERSION_DIR)
+    if sif and not netmhc_host_dir:
+        raise RuntimeError("Set PEPPRED_NETMHCPAN_HOST_DIR when PEPPRED_SIF/SIF is set.")
 
     nmhc_dir = os.path.join("NMHC", pepID)
     script_path = os.path.join(nmhc_dir, f"run_{pepID}.sh")
 
     with open(script_path, "w") as f:
         f.write("#!/bin/bash\n")
+        f.write(f"#SBATCH --job-name=nmhc_{pepID}\n")
+        f.write(f"#SBATCH -p {cpu_partition}\n")
+        f.write("#SBATCH --mem=4G\n")
+        f.write(f"#SBATCH -o NMHC/{pepID}/run_{pepID}.out\n")
+        f.write(f"#SBATCH -e NMHC/{pepID}/run_{pepID}.err\n")
+        f.write("set -euo pipefail\n")
+        f.write(f"cd {shell_quote(repo_root)}\n")
         f.write(f"touch NMHC/{pepID}/{sequence}.xls\n")
-        f.write(
-            f"cat NMHC/{pepID}/alleles.txt | while read line; do "
-            f"{netmhc_path} -a $line -p NMHC/{pepID}/{sequence}.pep -l 9 -BA "
-            f"-xlsfile NMHC/{pepID}/{sequence}.xls "
-            f">> NMHC/{pepID}/{sequence}.xls; "
-            f"done\n"
-        )
+        if sif:
+            prefix = singularity_exec_prefix(sif, repo_root, netmhc_host_dir, netmhc_container_dir)
+            f.write(f"NETMHCPAN_CONTAINER_DIR={shell_quote(netmhc_container_dir)}\n")
+            f.write(f"NETMHCPAN_VERSION_DIR={shell_quote(netmhc_version_dir)}\n")
+            f.write('NMHC_HOME="${NETMHCPAN_CONTAINER_DIR}/${NETMHCPAN_VERSION_DIR}"\n')
+            f.write('NMHC_PLATFORM="${NMHC_HOME}/Linux_x86_64"\n')
+            f.write('NMHC_BINARY="${NMHC_PLATFORM}/bin/netMHCpan-4.2"\n')
+            f.write('NMHC_TMP="${NMHC_HOME}/tmp"\n')
+            f.write(
+                f"cat NMHC/{pepID}/alleles.txt | while read line; do "
+                f"[ -z \"$line\" ] && continue; "
+                f"if ! {prefix} bash -c 'NMHOME=\"$2\" NETMHCpan=\"$3\" TMPDIR=\"$4\" "
+                f"\"$5\" -a \"$1\" -p NMHC/{pepID}/{sequence}.pep -l 9 -BA' "
+                f"_ \"$line\" \"$NMHC_HOME\" \"$NMHC_PLATFORM\" \"$NMHC_TMP\" \"$NMHC_BINARY\" "
+                f">> NMHC/{pepID}/{sequence}.xls 2>&1; then "
+                f"echo \"[WARN] NetMHCpan failed for $line; continuing.\" >> NMHC/{pepID}/{sequence}.xls; "
+                f"fi; "
+                f"done\n"
+            )
+        else:
+            f.write(
+                f"cat NMHC/{pepID}/alleles.txt | while read line; do "
+                f"if ! {netmhc_path} -a $line -p NMHC/{pepID}/{sequence}.pep -l 9 -BA "
+                f"-xlsfile NMHC/{pepID}/{sequence}.xls "
+                f">> NMHC/{pepID}/{sequence}.xls 2>&1; then "
+                f"echo \"[WARN] NetMHCpan failed for $line; continuing.\" >> NMHC/{pepID}/{sequence}.xls; "
+                f"fi; "
+                f"done\n"
+            )
 
         f.write(
-            f"awk '/{sequence}/&&/*/&&/:/ {{print $2, $15, $16, $18}}' "
+            f"awk '/{sequence}/&&/*/&&/:/ "
+            f"{{bind=($NF==\"SB\"||$NF==\"WB\")?$NF:\"\"; print $2, $15, $16, bind}}' "
             f"NMHC/{pepID}/{sequence}.xls > NMHC/{pepID}/results_{sequence}.txt\n"
         )
 
         f.write(
-            f"awk '/{sequence}/&&/*/&&/:/&&/SB|WB/ {{print $2, $15, $16, $18}}' "
+            f"awk '/{sequence}/&&/*/&&/:/&&/SB|WB/ "
+            f"{{bind=($NF==\"SB\"||$NF==\"WB\")?$NF:\"\"; print $2, $15, $16, bind}}' "
             f"NMHC/{pepID}/{sequence}.xls > NMHC/{pepID}/results_{sequence}_SB_WB_only.txt\n"
         )
 
-        f.write(
-            f"python geninput.py NMHC/{pepID}/results_{sequence}_SB_WB_only.txt "
-            f"NMDP.fasta {sequence} {pepID}\n"
-        )
+        if sif:
+            prefix = singularity_exec_prefix(sif, repo_root, netmhc_host_dir, netmhc_container_dir)
+            f.write(
+                f"{prefix} /opt/conda/bin/conda run -n compare python geninput.py "
+                f"NMHC/{pepID}/results_{sequence}_SB_WB_only.txt NMDP.fasta {sequence} {pepID}\n"
+            )
+        else:
+            f.write(
+                f"python geninput.py NMHC/{pepID}/results_{sequence}_SB_WB_only.txt "
+                f"NMDP.fasta {sequence} {pepID}\n"
+            )
 
     os.chmod(script_path, 0o755)
     return script_path
@@ -213,10 +306,25 @@ def main():
     print("Resetting Inputs")
     moveAFFT()
     moveNMHC()
+    os.makedirs("slurm_logs", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
     
     input_csv = sys.argv[1]
     peptides = process_csv(input_csv)
     subprocess.run(["bash", "NMHC/archive.sh"], check=True)
+    cpu_partition = os.getenv("PEPPRED_CPU_PARTITION", "normal")
+    driver_partition = os.getenv("PEPPRED_DRIVER_PARTITION", cpu_partition)
+    repo_root = os.getenv("PEPPRED_ROOT", REPO_ROOT)
+    sif = configured_sif()
+    netmhc_host_dir = os.getenv("PEPPRED_NETMHCPAN_HOST_DIR", "")
+    netmhc_container_dir = os.getenv("PEPPRED_NETMHCPAN_CONTAINER_DIR", DEFAULT_NETMHCPAN_CONTAINER_DIR)
+    if sif and not netmhc_host_dir:
+        print("[ERROR] Set PEPPRED_NETMHCPAN_HOST_DIR when PEPPRED_SIF/SIF is set.")
+        sys.exit(1)
+    run_id = os.getenv("PEPPRED_RUN_ID") or datetime.now().strftime("%Y%m%d_%H%M%S")
+    os.environ["PEPPRED_RUN_ID"] = run_id
+    project_name = os.getenv("PROJECT_NAME") or f"peppred_{run_id}"
+    os.environ["PROJECT_NAME"] = project_name
     
     job_ids = []
     for pepID, sequence, allele_list in peptides:
@@ -231,6 +339,8 @@ def main():
 
         out = subprocess.check_output([
             "sbatch",
+            "-p",
+            cpu_partition,
             f"--output=slurm_logs/run_{pepID}.out",
             f"--error=slurm_logs/run_{pepID}.err",
             script
@@ -243,12 +353,20 @@ def main():
 
     netmhc_dependency = ":".join(job_ids)
 
+    if sif:
+        prefix = singularity_exec_prefix(sif, repo_root, netmhc_host_dir, netmhc_container_dir)
+        cover_wrap = f"{prefix} /opt/conda/bin/conda run -n compare python cover.py"
+    else:
+        cover_wrap = "python3 cover.py"
+
     cover_job_info = subprocess.check_output([
         "sbatch",
         f"--dependency=afterok:{netmhc_dependency}",
+        "-p",
+        cpu_partition,
         "--output=slurm_logs/cover.out",
         "--error=slurm_logs/cover.err",
-        "--wrap=python3 cover.py"
+        f"--wrap={cover_wrap}"
     ]).decode().strip()
 
     cover_job = cover_job_info.split()[-1]
@@ -258,10 +376,37 @@ def main():
         "sbatch",
         f"--dependency=afterok:{cover_job}",
         "-p",
-        "{{PARTITION_GPU}}",
-        "--gres=gpu:1",
+        driver_partition,
         "--output=slurm_logs/fold.out",
         "--error=slurm_logs/fold.err",
+        slurm_export_arg({
+            "SIF": sif,
+            "PEPPRED_SIF": sif,
+            "PEPPRED_ROOT": repo_root,
+            "PEPPRED_NETMHCPAN_HOST_DIR": netmhc_host_dir,
+            "PEPPRED_NETMHCPAN_CONTAINER_DIR": netmhc_container_dir,
+            "PEPPRED_NETMHCPAN_VERSION_DIR": os.getenv("PEPPRED_NETMHCPAN_VERSION_DIR", DEFAULT_NETMHCPAN_VERSION_DIR),
+            "PEPPRED_ASSETS_HOST": os.getenv("PEPPRED_ASSETS_HOST", ""),
+            "PEPPRED_ASSETS_CONTAINER": os.getenv("PEPPRED_ASSETS_CONTAINER", ""),
+            "PEPPRED_MODEL_PARAMS_HOST": os.getenv("PEPPRED_MODEL_PARAMS_HOST", ""),
+            "PEPPRED_MODEL_PARAMS_CONTAINER": os.getenv("PEPPRED_MODEL_PARAMS_CONTAINER", ""),
+            "PEPPRED_ENABLE_PYROSETTA": os.getenv("PEPPRED_ENABLE_PYROSETTA") or "1",
+            "PEPPRED_PYROSETTA_HOST_PATH": os.getenv("PEPPRED_PYROSETTA_HOST_PATH", ""),
+            "PEPPRED_PYROSETTA_CONTAINER_PATH": os.getenv("PEPPRED_PYROSETTA_CONTAINER_PATH", ""),
+            "PEPPRED_PYROSETTA_PATH": os.getenv("PEPPRED_PYROSETTA_PATH", ""),
+            "PEPPRED_AFFT_PARAMS": os.getenv("PEPPRED_AFFT_PARAMS", ""),
+            "PEPPRED_INFERENCE_MODEL_BUNDLE": os.getenv("PEPPRED_INFERENCE_MODEL_BUNDLE", ""),
+            "FOLDSEEK_BIN": os.getenv("FOLDSEEK_BIN", os.getenv("PEPPRED_FOLDSEEK_BIN", "")),
+            "ALPHAFOLD_ENV_CONTAINER": os.getenv("ALPHAFOLD_ENV_CONTAINER", "/opt/conda/envs/alphafold"),
+            "ALPHAFOLD_PYTHON_CONTAINER": os.getenv("ALPHAFOLD_PYTHON_CONTAINER", "/opt/conda/envs/alphafold/bin/python"),
+            "PEPPRED_CPU_PARTITION": cpu_partition,
+            "PEPPRED_DRIVER_PARTITION": driver_partition,
+            "PEPPRED_GPU_PARTITION": os.getenv("PEPPRED_GPU_PARTITION", "{{PARTITION_GPU}}"),
+            "PEPPRED_GPU_GRES": os.getenv("PEPPRED_GPU_GRES", "gpu:1"),
+            "PEPPRED_GPU_CONSTRAINT": os.getenv("PEPPRED_GPU_CONSTRAINT", ""),
+            "PEPPRED_RUN_ID": run_id,
+            "PROJECT_NAME": project_name,
+        }),
         "AFFT-HLA3DB/fold.sh"
     ]).decode().strip()
 
@@ -270,4 +415,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

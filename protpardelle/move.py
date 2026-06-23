@@ -1,41 +1,46 @@
-import os
 import shutil
+import os
+from pathlib import Path
+
 from misc.constants import *
 
-# root directory containing the ensemble folders
+# Change note (2026-06-14, wyattb/codex):
+# SIF compatibility: collect Protpardelle outputs from the configured
+# project/output directory, avoiding assumptions about a fixed local results tree.
 
-ROOT_DIR = f"{mainpath}/protpardelle/results/peppred/cc89pmhc-epoch8800-sampling_partial_diffusion_allatom-ss1.0-schurn0-ccstart0.0-dx0.0-dy0.0-dz0.0-rewind80"
+# Root directory containing model/config output folders for this run.
+OUTPUT_ROOT = Path(os.environ.get("PROTPARDELLE_OUTPUT_DIR", Path(mainpath) / "protpardelle" / "results"))
+PROJECT_NAME = (
+    os.environ.get("PROTPARDELLE_CONFIG_NAME")
+    or os.environ.get("PROTPARDELLE_PROJECT_NAME")
+    or "peppred"
+)
+ROOT_DIR = OUTPUT_ROOT / PROJECT_NAME
+OUT_DIR = Path("structures")
 
-# output directory where all pdbs will go
-OUT_DIR = "structures"
+OUT_DIR.mkdir(exist_ok=True)
 
-os.makedirs(OUT_DIR, exist_ok=True)
+if not ROOT_DIR.exists():
+    raise FileNotFoundError(f"Protpardelle output root not found: {ROOT_DIR}")
 
-for folder in os.listdir(ROOT_DIR):
+config_dirs = sorted(p for p in ROOT_DIR.iterdir() if p.is_dir())
+if not config_dirs:
+    raise RuntimeError(f"No Protpardelle config output directories found in {ROOT_DIR}")
 
-    folder_path = os.path.join(ROOT_DIR, folder)
+for config_dir in config_dirs:
+    for folder_path in sorted(p for p in config_dir.iterdir() if p.is_dir()):
+        for src in sorted(folder_path.glob("*.pdb")):
+            # case 1: already a sample file
+            if src.name.startswith("sample_"):
+                new_name = src.name
+            # case 2: base structure like 1K5N.pdb
+            else:
+                new_name = f"sample_{src.stem}_50.pdb"
 
-    if not os.path.isdir(folder_path):
-        continue
+            dst = OUT_DIR / new_name
+            if dst.exists():
+                dst = OUT_DIR / f"{config_dir.name}_{new_name}"
 
-    for file in os.listdir(folder_path):
-
-        if not file.endswith(".pdb"):
-            continue
-
-        src = os.path.join(folder_path, file)
-
-        # case 1: already a sample file
-        if file.startswith("sample_"):
-            new_name = file
-
-        # case 2: base structure like 1K5N.pdb
-        else:
-            base = file.replace(".pdb", "")
-            new_name = f"sample_{base}_50.pdb"
-
-        dst = os.path.join(OUT_DIR, new_name)
-
-        shutil.copy2(src, dst)
+            shutil.copy2(src, dst)
 
 print("Done collecting PDBs.")

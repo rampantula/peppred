@@ -5,11 +5,16 @@
 #   Email: rpantula@sas.upenn.edu
 
 #USER VARIABLE **** IMPORTANT FOR USERS ****
-mainpath="{{ROOT}}"
+import os
+from pathlib import Path
+
+mainpath=os.environ.get("PEPPRED_ROOT", str(Path(__file__).resolve().parents[1]))
 dbpath=f"{mainpath}/Inference"
-ROSETTA_INSTALL_DIR = "{{ROSETTA}}"
-condapath = "{{CONDA}}"
-netloc ="{{NMHC}}"
+ROSETTA_INSTALL_DIR = os.environ.get("PEPPRED_ROSETTA_DIR", "")
+condapath = os.environ.get("PEPPRED_CONDA_ACTIVATE", "{{CONDA}}")
+_netmhc_root = os.environ.get("PEPPRED_NETMHCPAN_CONTAINER_DIR", "/container/software/netmhcpan")
+_netmhc_version = os.environ.get("PEPPRED_NETMHCPAN_VERSION_DIR", "netMHCpan-4.2-linux")
+netloc = os.environ.get("PEPPRED_NETMHCPAN_BIN", f"{_netmhc_root}/{_netmhc_version}/netMHCpan")
 
 DEFAULT_MHC_CHAIN = 'A'
 DEFAULT_PEP_CHAIN = 'B'

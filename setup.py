@@ -5,13 +5,28 @@ import re
 #### USERS EDIT HERE: ######
 
 # Paths
-ROOT = "enter path ../peppred"
-ROSETTA = "enter path to ../.../main"
-CONDA = "enter path to ../bin/activate"
-NMHC = "enter path to netMHCpan-4.1/netMHCpan"
+#
+# Conda/non-SIF use:
+#   Leave PEPPRED_SIF unset. Set CONDA to the host conda activate script,
+#   NMHC to the host netMHCpan executable, and ROSETTA if your workflow uses it.
+#
+# Singularity/SIF use:
+#   Export PEPPRED_SIF=/path/to/peppred.sif before running setup.py or start.py.
+#   CONDA then defaults to the container activate script. NMHC should be the
+#   container-visible NetMHCpan path; at run time, bind the host NetMHCpan
+#   install by setting PEPPRED_NETMHCPAN_HOST_DIR.
+#   PyRosetta is not controlled by ROSETTA. It is attempted by default; set
+#   PEPPRED_PYROSETTA_PATH if the package is outside the active Python env, or
+#   PEPPRED_ENABLE_PYROSETTA=0 to use the Biopython fallback.
+ROOT = os.environ.get("PEPPRED_ROOT", os.path.dirname(os.path.abspath(__file__)))
+ROSETTA = os.environ.get("PEPPRED_ROSETTA_DIR", "")
+CONDA = os.environ.get("PEPPRED_CONDA_ACTIVATE", "/opt/conda/bin/activate" if os.environ.get("PEPPRED_SIF") else "enter path to ../bin/activate")
+NETMHCPAN_CONTAINER_DIR = os.environ.get("PEPPRED_NETMHCPAN_CONTAINER_DIR", "/container/software/netmhcpan")
+NETMHCPAN_VERSION_DIR = os.environ.get("PEPPRED_NETMHCPAN_VERSION_DIR", "netMHCpan-4.2-linux")
+NMHC = os.environ.get("PEPPRED_NETMHCPAN_BIN", f"{NETMHCPAN_CONTAINER_DIR}/{NETMHCPAN_VERSION_DIR}/netMHCpan")
 # Partition names (change for your HPC cluster)
-PARTITION_GPU = "gpu"
-PARTITION_SHORT = "normal"
+PARTITION_GPU = os.environ.get("PEPPRED_GPU_PARTITION", "gpu")
+PARTITION_SHORT = os.environ.get("PEPPRED_CPU_PARTITION", "normal")
 
 ### DO NOT EDIT ###
 
@@ -62,4 +77,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
