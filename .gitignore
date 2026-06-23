@@ -1,0 +1,57 @@
+# Change note (2026-06-14, wyattb/codex):
+# Public-SIF release prep: keep generated validation outputs, caches, packaged
+# assets, and local env files out of the PR while preserving source files.
+
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS metadata
+.DS_Store
+._*
+__MACOSX/
+
+# PepPred generated run state
+results/
+slurm_logs/
+*.out
+*.err
+*.log
+*.bak
+peppred-public.env
+release_assets/
+peppred-model-assets-*.tar.zst
+peppred-model-assets-*.tar.zst.sha256
+peppred-model-assets-*.MANIFEST.sha256
+
+# AFFT/AlphaFold generated outputs
+AFFT-HLA3DB/incomplete/
+AFFT-HLA3DB/input_seq/
+AFFT-HLA3DB/outfiles/
+AFFT-HLA3DB/params/
+AFFT-HLA3DB/runlogs/
+AFFT-HLA3DB/scorings/
+AFFT-HLA3DB/MHC_pdbs/
+AFFT-HLA3DB/inputgen.out
+AFFT-HLA3DB/inputgen.err
+
+# NetMHCpan generated run directories
+NMHC/incomplete/
+NMHC/*/
+!NMHC/
+
+# Inference generated outputs
+Inference/logs/
+Inference/out/
+Inference/stored/
+Inference/structures/
+Inference/scorings/
+Inference/peppred.pkl
+
+# Protpardelle generated outputs
+protpardelle/MHC_pdbs/
+protpardelle/jobs/
+protpardelle/logs/
+protpardelle/results/
+protpardelle/slurm-*.out

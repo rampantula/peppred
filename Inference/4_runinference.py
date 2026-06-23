@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+# Change note (2026-06-14, wyattb/codex):
+# Public-SIF release prep: load the inference model bundle from PEPPRED config so
+# peppred.pkl can live in the companion asset archive instead of tracked source.
 
+import os
 import numpy as np
 import pandas as pd
 import joblib
 
 
 TRIAL_PAIR_FEATURES = "out/trial_pair_features.csv"
-MODEL_BUNDLE = "peppred.pkl"
+MODEL_BUNDLE = os.environ.get("PEPPRED_INFERENCE_MODEL_BUNDLE", "peppred.pkl")
 OUTFILE = "out/trial_predictions.csv"
 
 
