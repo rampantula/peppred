@@ -6,6 +6,10 @@
 #SBATCH --output=logs/peppred2_%j.out
 #SBATCH --error=logs/peppred2_%j.err
 
+#Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+#Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+#See LICENSE file for details.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

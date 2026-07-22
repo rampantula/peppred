@@ -1,11 +1,15 @@
-#!/usr/bin/python
-
 #       Sgourakis Lab
-#   Author: Santrupti Nerli
-#   Date: December 20, 2018
-#   Email: snerli@ucsc.edu
+#   Author: Santrupti Nerli & Sagar Gupta 
+#   Modified: Ram Pantula
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
 #
 
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 '''
 
 A dictionary of supported MHC sequences of length 180 amino acids long

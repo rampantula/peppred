@@ -4,6 +4,11 @@
 #   Date: July 1, 2025
 #   Email: rpantula@sas.upenn.edu
 
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 #USER VARIABLE **** IMPORTANT FOR USERS ****
 import os
 from pathlib import Path

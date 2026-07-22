@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF release prep: load the inference model bundle from PEPPRED config so
-# peppred.pkl can live in the companion asset archive instead of tracked source.
+#       Sgourakis Lab
+#   Author: Ram Pantula
+#   Modified: Wyatt Blackson
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
 
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 import os
 import numpy as np
 import pandas as pd

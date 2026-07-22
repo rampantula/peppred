@@ -1,6 +1,9 @@
 ## PepPred
-
 PepPred is a structural similarity prediction program that utilizes sequence information of 9mer peptide antigens and predicted binder HLA alleles to generate structural comparisons of the peptide backbone conformations between two alleles presenting a shared antigen.
+
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
 
 ## Runtime Options
 
@@ -16,9 +19,9 @@ SIF runs require:
 - a user-provided NetMHCpan install
 
 Host conda runs require the original conda environments and host NetMHCpan
-paths configured through `setup.py`.
+paths configured through `setup.py`, and set up throught the local_env folder.
 
-## Environment Overview
+## Local Environment Overview
 
 This pipeline uses four conda environments:
 
@@ -45,18 +48,13 @@ Download the public SIF release files from
 
 ```text
 peppred-v0.1.0.sif
-peppred-v0.1.0.sif.sha256
 peppred-model-assets-v0.1.0.tar.zst
-peppred-model-assets-v0.1.0.tar.zst.sha256
-peppred-model-assets-v0.1.0.MANIFEST.sha256
 ```
 
-Verify the downloads if the checksum files are available, then extract the
+Verify the downloads if the  files are available, then extract the
 companion asset archive:
 
 ```bash
-sha256sum -c peppred-v0.1.0.sif.sha256
-sha256sum -c peppred-model-assets-v0.1.0.tar.zst.sha256
 tar -I zstd -xf peppred-model-assets-v0.1.0.tar.zst
 ```
 
@@ -107,7 +105,7 @@ Use runner flags for run-specific values:
 ./run_peppred.sh --env peppred-public.env --input input.csv --run-id my_run
 ```
 
-### 4. Set up host conda environments
+### 4. ALTERNATE RUNTIME OPTION: Set up host conda environments
 
 Use this path only when running without the SIF. Leave `PEPPRED_SIF` and `SIF`
 unset. The scripts activate environments by name, so create `alphafold`,

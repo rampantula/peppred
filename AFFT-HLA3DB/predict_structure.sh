@@ -6,6 +6,11 @@
 #SBATCH -o inputgen.out
 #SBATCH --error=inputgen.err
 
+#Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+#Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+#See LICENSE file for details.
+
+
 set -euo pipefail
 
 targname=$1

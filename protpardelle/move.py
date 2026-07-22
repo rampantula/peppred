@@ -1,12 +1,21 @@
+#       Sgourakis Lab
+#   Author: Ram Pantula 
+#   Modified: Wyatt Blackson
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
+#
+
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
+
 import shutil
 import os
 from pathlib import Path
 
 from misc.constants import *
-
-# Change note (2026-06-14, wyattb/codex):
-# SIF compatibility: collect Protpardelle outputs from the configured
-# project/output directory, avoiding assumptions about a fixed local results tree.
 
 # Root directory containing model/config output folders for this run.
 OUTPUT_ROOT = Path(os.environ.get("PROTPARDELLE_OUTPUT_DIR", Path(mainpath) / "protpardelle" / "results"))

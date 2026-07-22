@@ -1,12 +1,21 @@
+#!/usr/bin/env python3
+#       Sgourakis Lab
+#   Author: Ram Pantula
+#   Modified: Wyatt Blackson
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
+
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
+
 from pathlib import Path
 from datetime import datetime
 import shutil
 import os
 from constants import mainpath
-
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF release prep: package only current run directories and locate
-# Protpardelle outputs from env-configured paths to avoid stale-result leakage.
 
 #script that organizes outputs
 
