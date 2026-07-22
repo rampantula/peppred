@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+#       Sgourakis Lab
+#   Author: Ram Pantula
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
+
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
+
 supertypes = {
     "A*01": ["HLA-A*01:01", "HLA-A*01:03", "HLA-A*01:12", "HLA-A*26:09",
             "HLA-A*26:18", "HLA-A*30:12", "HLA-A*36:02", "HLA-A*25:01", "HLA-A*36:03", "HLA-A*26:01",

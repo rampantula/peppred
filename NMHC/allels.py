@@ -2,6 +2,11 @@
 #   Author: Sagar Gupta
 #   Date: June 2, 2022
 #   Email: sagarg@sas.upenn.edu
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 
 # import required libraries
 import csv

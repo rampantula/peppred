@@ -6,14 +6,15 @@
 #SBATCH -o inputgen.out
 #SBATCH --error=inputgen.err
 
+#Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+#Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+#See LICENSE file for details.
+
 set -euo pipefail
 
 targname=$1
 params=$2
 
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF/local-mode prep: use host alphafold when PEPPRED_SIF is unset, or
-# the in-image alphafold env and external asset binds when PEPPRED_SIF is set.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${PEPPRED_ROOT:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
 SIF="${PEPPRED_SIF:-${SIF:-}}"

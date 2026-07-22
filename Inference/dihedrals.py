@@ -1,11 +1,14 @@
 #       Sgourakis Lab
 #   Author: Ram Pantula
+#   Modified: Wyatt Blackson
 #   Date: April 15, 2026
 #   Email: sagarg@sas.upenn.edu
 #
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF release prep: keep PyRosetta support when present, but add the
-# Biopython fallback so Rosetta/PyRosetta can remain optional for v0.1.
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 
 # import required libraries
 import csv

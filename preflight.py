@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Host-side release preflight for PepPred runtime inputs."""
+#       Sgourakis Lab
+#   Author: Wyatt Blackson
+#   Modified: Ram Pantula
+#   Date: July 1, 2026
+#   Email: rpantula@sas.upenn.edu
 
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF/local-mode prep: fail fast on missing runtime inputs before Slurm
-# or local execution. SIF-specific checks run only when PEPPRED_SIF/SIF is set.
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 
 import argparse
 import os

@@ -32,18 +32,13 @@ public release files from <https://zenodo.org/records/20076767>:
 
 ```text
 peppred-v0.1.0.sif
-peppred-v0.1.0.sif.sha256
 peppred-model-assets-v0.1.0.tar.zst
-peppred-model-assets-v0.1.0.tar.zst.sha256
-peppred-model-assets-v0.1.0.MANIFEST.sha256
 ```
 
 Verify the downloads if the checksum files are available, then extract the
 companion asset archive:
 
 ```bash
-sha256sum -c peppred-v0.1.0.sif.sha256
-sha256sum -c peppred-model-assets-v0.1.0.tar.zst.sha256
 tar -I zstd -xf peppred-model-assets-v0.1.0.tar.zst
 ```
 

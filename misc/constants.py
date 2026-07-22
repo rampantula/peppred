@@ -1,13 +1,16 @@
 #       Sgourakis Lab
 #   Author: Sagar Gupta 
-#   Modified: Ram Pantula
+#   Modified: Ram Pantula & Wyatt Blackson
 #   Date: July 1, 2025
 #   Email: rpantula@sas.upenn.edu
 
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
+
 #USER VARIABLE **** IMPORTANT FOR USERS ****
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF release prep: derive paths from PEPPRED_* env vars so host-side
-# setup.py edits are not required for the containerized workflow.
 import os
 from pathlib import Path
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF/local-mode prep: keep the validated Slurm array/merge model by
-# default, and use genlist.py's non-array path for PEPPRED_SCHEDULER=local.
+#Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+#Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+#See LICENSE file for details.
 
 # =========================
 # USER SETTINGS

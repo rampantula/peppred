@@ -5,7 +5,11 @@
 #   Date: December 20, 2018
 #   Email: snerli@ucsc.edu
 #
-
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
 '''
 
 A dictionary of supported MHC sequences of length 180 amino acids long

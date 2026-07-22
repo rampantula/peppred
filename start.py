@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF/local-mode prep: keep the validated Slurm DAG as the default,
-# configure runtime paths through PEPPRED_* env vars, and add an explicit serial
-# local mode.
+#       Sgourakis Lab
+#   Author: Ram Pantula
+#   Modified: Wyatt Blackson
+#   Date: July 1, 2025
+#   Email: rpantula@sas.upenn.edu
+
+"""
+Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+See LICENSE file for details.
+"""
+
 import os
 import sys
 import csv
@@ -333,6 +341,7 @@ def generate_netmhc_script(pepID, sequence):
 
     nmhc_dir = os.path.join("NMHC", pepID)
     script_path = os.path.join(nmhc_dir, f"run_{pepID}.sh")
+    netmhc_binary_name = os.getenv("PEPPRED_NETMHCPAN_BINARY_NAME", "netMHCpan")
 
     with open(script_path, "w") as f:
         f.write("#!/bin/bash\n")
@@ -348,9 +357,9 @@ def generate_netmhc_script(pepID, sequence):
             prefix = singularity_exec_prefix(sif, repo_root, netmhc_host_dir, netmhc_container_dir)
             f.write(f"NETMHCPAN_CONTAINER_DIR={shell_quote(netmhc_container_dir)}\n")
             f.write(f"NETMHCPAN_VERSION_DIR={shell_quote(netmhc_version_dir)}\n")
-            f.write('NMHC_HOME="${NETMHCPAN_CONTAINER_DIR}/${NETMHCPAN_VERSION_DIR}"\n')
+            f.write('NMHC_HOME="${NETMHCPAN_CONTAINER_DIR}${NETMHCPAN_VERSION_DIR:+/${NETMHCPAN_VERSION_DIR}}"\n')
             f.write('NMHC_PLATFORM="${NMHC_HOME}/Linux_x86_64"\n')
-            f.write('NMHC_BINARY="${NMHC_PLATFORM}/bin/netMHCpan-4.2"\n')
+            f.write(f'NMHC_BINARY="${{NMHC_PLATFORM}}/bin/{netmhc_binary_name}"\n')
             f.write('NMHC_TMP="${NMHC_HOME}/tmp"\n')
             f.write(
                 f"cat NMHC/{pepID}/alleles.txt | while read line; do "

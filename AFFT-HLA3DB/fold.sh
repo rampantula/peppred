@@ -6,12 +6,13 @@
 #SBATCH -o inputgen.out
 #SBATCH --error=inputgen.err
 
+#Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
+#Licensed for academic and non-commercial use only. Commercial use requires a separate license.
+#See LICENSE file for details.
+
 set -euo pipefail
 
-# Change note (2026-06-14, wyattb/codex):
-# Public-SIF/local-mode prep: initialize AFFT through the selected runtime,
-# preserve the validated Slurm fan-out behavior by default, and support serial
-# local target execution via PEPPRED_SCHEDULER=local.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SIF="${PEPPRED_SIF:-${SIF:-}}"
 SCRATCH="${SCRATCH:-/scratch}"
