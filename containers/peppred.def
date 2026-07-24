@@ -1,0 +1,101 @@
+Bootstrap: docker
+From: python@sha256:a39549e211a16149edf74e5fdc9ef03a6767e46cd987c5048b6659b6c9904c94
+
+%labels
+    org.opencontainers.image.title PepPred
+    org.opencontainers.image.description "PepPred runtime environments; model assets and licensed tools are supplied separately"
+    org.opencontainers.image.version {{ PEPPRED_VERSION }}
+    org.opencontainers.image.revision {{ PEPPRED_GIT_COMMIT }}
+    org.opencontainers.image.source https://github.com/rampantula/peppred
+
+%help
+    PepPred runtime image.
+
+    Environments:
+      /opt/conda/envs/alphafold
+      /opt/conda/envs/compare
+      /opt/conda/envs/train
+      /opt/conda/envs/protpardelle
+
+    This image intentionally excludes model assets, NetMHCpan, and PyRosetta.
+    See the repository README and containers/README.md for runtime setup.
+
+%files
+    containers/envs/alphafold.yml /opt/peppred-build/envs/alphafold.yml
+    containers/envs/compare.yml /opt/peppred-build/envs/compare.yml
+    containers/envs/train.yml /opt/peppred-build/envs/train.yml
+    containers/envs/protpardelle-validated-pip.txt /opt/peppred-build/envs/protpardelle-validated-pip.txt
+    protpardelle/pyproject.toml /opt/peppred-build/protpardelle/pyproject.toml
+    protpardelle/README.md /opt/peppred-build/protpardelle/README.md
+    protpardelle/LICENSE /opt/peppred-build/protpardelle/LICENSE
+    protpardelle/src /opt/peppred-build/protpardelle/src
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates tcsh wget
+    rm -rf /var/lib/apt/lists/*
+
+    miniconda_url="https://repo.anaconda.com/miniconda/Miniconda3-py313_26.3.2-2-Linux-x86_64.sh"
+    miniconda_sha256="2284bafb7863a23411b19874d216e237964d4b32dd9beb6807fa8b2d84570961"
+    wget -q "${miniconda_url}" -O /tmp/miniconda.sh
+    echo "${miniconda_sha256}  /tmp/miniconda.sh" | sha256sum -c -
+    bash /tmp/miniconda.sh -b -p /opt/conda
+    rm /tmp/miniconda.sh
+
+    export PATH="/opt/conda/bin:${PATH}"
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+    conda env create \
+        --file /opt/peppred-build/envs/alphafold.yml \
+        --prefix /opt/conda/envs/alphafold
+    conda env create \
+        --file /opt/peppred-build/envs/compare.yml \
+        --prefix /opt/conda/envs/compare
+    conda env create \
+        --file /opt/peppred-build/envs/train.yml \
+        --prefix /opt/conda/envs/train
+
+    conda create --yes \
+        --prefix /opt/conda/envs/protpardelle \
+        python=3.12.13 \
+        pip=26.1.1 \
+        wheel=0.46.3
+    /opt/conda/envs/protpardelle/bin/python -m pip install \
+        --no-cache-dir \
+        --requirement /opt/peppred-build/envs/protpardelle-validated-pip.txt
+    /opt/conda/envs/protpardelle/bin/python -m pip install \
+        --no-cache-dir \
+        --no-deps \
+        --no-build-isolation \
+        /opt/peppred-build/protpardelle
+
+    conda clean --all --yes
+    rm -rf /root/.cache /opt/peppred-build
+
+%environment
+    export PATH="/opt/conda/bin:${PATH}"
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+%test
+    set -eu
+
+    test -x /opt/conda/envs/alphafold/bin/python
+    test -x /opt/conda/envs/alphafold/bin/ptxas
+    test -e /opt/conda/envs/alphafold/lib/libcusolver.so.11
+    test -x /opt/conda/envs/compare/bin/python
+    test -x /opt/conda/envs/train/bin/python
+    test -x /opt/conda/envs/protpardelle/bin/python
+
+    /opt/conda/envs/alphafold/bin/python -c \
+        "import importlib.util; assert importlib.util.find_spec('jax'); assert importlib.util.find_spec('tensorflow'); assert importlib.util.find_spec('openmm')"
+    /opt/conda/envs/compare/bin/python -c \
+        "import Bio, pymol; print('compare environment: ok')"
+    /opt/conda/envs/train/bin/python -c \
+        "import lightgbm, pandas, sklearn; print('train environment: ok')"
+    /opt/conda/envs/protpardelle/bin/python -c \
+        "import Bio, protpardelle, torch, transformers; print('protpardelle environment: ok')"

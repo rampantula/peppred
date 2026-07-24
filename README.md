@@ -18,8 +18,8 @@ SIF runs require:
 - the extracted companion model/tool asset archive
 - a user-provided NetMHCpan install
 
-Host conda runs require the original conda environments and host NetMHCpan
-paths configured through `setup.py`, and set up throught the local_env folder.
+Host conda runs require the environment specifications under
+`containers/envs/` and host NetMHCpan paths configured through `setup.py`.
 
 ## Local Environment Overview
 
@@ -31,6 +31,12 @@ This pipeline uses four conda environments:
 | `compare` | Main pipeline runtime, MHC scoring, dihedral calculation | `start.py`, `Inference/inference.sh` |
 | `train` | Model inference and training | `Inference/1_extract.py` through `6_output.py` |
 | `protpardelle` | Structural sampling via Protpardelle-1c | `protpardelle/run.sh` |
+
+Project maintainers should keep the portable SIF build inputs in
+`containers/` and publish generated images through versioned Zenodo records.
+See [`containers/README.md`](containers/README.md) for the three-person build,
+test, checksum, and release workflow. Generated `.sif` files are intentionally
+excluded from Git.
 
 ## Setup
 
@@ -44,14 +50,14 @@ cd peppred
 ### 2. Download and extract SIF release files
 
 Download the public SIF release files from
-<https://zenodo.org/records/20076767>:
+<https://doi.org/10.5281/zenodo.20076766>:
 
 ```text
 peppred-v0.1.0.sif
 peppred-model-assets-v0.1.0.tar.zst
 ```
 
-Verify the downloads if the  files are available, then extract the
+Verify the downloads with the published checksum files, then extract the
 companion asset archive:
 
 ```bash
@@ -114,9 +120,9 @@ home directory has limited space, configure conda to place named environments in
 scratch before creating them.
 
 ```bash
-conda env create -f alphafold.yml
-conda env create -f compare.yml
-conda env create -f train.yml
+conda env create -f containers/envs/alphafold.yml
+conda env create -f containers/envs/compare.yml
+conda env create -f containers/envs/train.yml
 
 cd protpardelle
 conda create -n protpardelle python=3.12 --yes
