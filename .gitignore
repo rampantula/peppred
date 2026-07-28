@@ -25,6 +25,13 @@ peppred-model-assets-*.tar.zst
 peppred-model-assets-*.tar.zst.sha256
 peppred-model-assets-*.MANIFEST.sha256
 
+# Local container builds. Build recipes belong in Git; generated SIF binaries,
+# checksums, and manifests belong in shared lab storage and Zenodo records.
+*.sif
+*.sif.sha256
+peppred-v*.manifest.txt
+dist/
+
 # AFFT/AlphaFold generated outputs
 AFFT-HLA3DB/incomplete/
 AFFT-HLA3DB/input_seq/

@@ -110,21 +110,20 @@ export PEPPRED_PYROSETTA_CONTAINER_PATH="${PYROSETTA_CONTAINER_PATH}"
 export PEPPRED_PYROSETTA_PATH="${PYROSETTA_PATH}"
 
 run_compare() {
-    local asset_bind_args=()
+    local bind_args=(
+        --bind "${ROOT}:${ROOT}"
+        --bind "${NETMHCPAN_HOST_DIR}:${NETMHCPAN_CONTAINER_DIR}"
+        --bind "${SCRATCH}:/scratch"
+    )
     if [[ -n "${ASSETS_HOST:-}" && -n "${ASSETS_CONTAINER:-}" ]]; then
-        asset_bind_args=(--bind "${ASSETS_HOST}:${ASSETS_CONTAINER}")
+        bind_args+=(--bind "${ASSETS_HOST}:${ASSETS_CONTAINER}")
     fi
-    local pyrosetta_bind_args=()
     if [[ -n "${PYROSETTA_HOST_PATH:-}" && -n "${PYROSETTA_CONTAINER_PATH:-}" ]]; then
-        pyrosetta_bind_args=(--bind "${PYROSETTA_HOST_PATH}:${PYROSETTA_CONTAINER_PATH}")
+        bind_args+=(--bind "${PYROSETTA_HOST_PATH}:${PYROSETTA_CONTAINER_PATH}")
     fi
     singularity exec \
         --cleanenv \
-        --bind "${ROOT}:${ROOT}" \
-        --bind "${NETMHCPAN_HOST_DIR}:${NETMHCPAN_CONTAINER_DIR}" \
-        --bind "${SCRATCH}:/scratch" \
-        "${asset_bind_args[@]}" \
-        "${pyrosetta_bind_args[@]}" \
+        "${bind_args[@]}" \
         --env PYTHONPATH= \
         --env PEPPRED_ENABLE_PYROSETTA="${PYROSETTA_ENABLE:-}" \
         --env PEPPRED_PYROSETTA_PATH="${PYROSETTA_PATH:-}" \
@@ -138,21 +137,20 @@ run_compare() {
 }
 
 run_train() {
-    local asset_bind_args=()
+    local bind_args=(
+        --bind "${ROOT}:${ROOT}"
+        --bind "${NETMHCPAN_HOST_DIR}:${NETMHCPAN_CONTAINER_DIR}"
+        --bind "${SCRATCH}:/scratch"
+    )
     if [[ -n "${ASSETS_HOST:-}" && -n "${ASSETS_CONTAINER:-}" ]]; then
-        asset_bind_args=(--bind "${ASSETS_HOST}:${ASSETS_CONTAINER}")
+        bind_args+=(--bind "${ASSETS_HOST}:${ASSETS_CONTAINER}")
     fi
-    local pyrosetta_bind_args=()
     if [[ -n "${PYROSETTA_HOST_PATH:-}" && -n "${PYROSETTA_CONTAINER_PATH:-}" ]]; then
-        pyrosetta_bind_args=(--bind "${PYROSETTA_HOST_PATH}:${PYROSETTA_CONTAINER_PATH}")
+        bind_args+=(--bind "${PYROSETTA_HOST_PATH}:${PYROSETTA_CONTAINER_PATH}")
     fi
     singularity exec \
         --cleanenv \
-        --bind "${ROOT}:${ROOT}" \
-        --bind "${NETMHCPAN_HOST_DIR}:${NETMHCPAN_CONTAINER_DIR}" \
-        --bind "${SCRATCH}:/scratch" \
-        "${asset_bind_args[@]}" \
-        "${pyrosetta_bind_args[@]}" \
+        "${bind_args[@]}" \
         --env PYTHONPATH= \
         --env PEPPRED_ENABLE_PYROSETTA="${PYROSETTA_ENABLE:-}" \
         --env PEPPRED_PYROSETTA_PATH="${PYROSETTA_PATH:-}" \
