@@ -1,6 +1,8 @@
 ## PepPred
 PepPred is a structural similarity prediction program that utilizes sequence information of 9mer peptide antigens and predicted binder HLA alleles to generate structural comparisons of the peptide backbone conformations between two alleles presenting a shared antigen.
 
+See manuscript for more information on methods and testing results: https://www.biorxiv.org/content/10.64898/2026.05.21.726655v1.full
+
 Copyright (c) 2026 The Children's Hospital of Philadelphia and Stanford University
 Licensed for academic and non-commercial use only. Commercial use requires a separate license.
 See LICENSE file for details.
